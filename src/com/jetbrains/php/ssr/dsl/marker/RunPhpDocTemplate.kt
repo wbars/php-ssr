@@ -55,7 +55,10 @@ private fun createMatchVariableConstraint(constraints: MutableMap<String, String
   val res = MatchVariableConstraint()
   if (constraints[ConstraintName.NAME.docName] != null) res.name = constraints[ConstraintName.NAME.docName]
   if (constraints[ConstraintName.MIN_COUNT.docName] != null) res.minCount = Integer.parseInt(constraints[ConstraintName.MIN_COUNT.docName])
-  if (constraints[ConstraintName.MAX_COUNT.docName] != null) res.maxCount = Integer.parseInt(constraints[ConstraintName.MAX_COUNT.docName])
+  if (constraints[ConstraintName.MAX_COUNT.docName] != null) {
+    res.maxCount = if (constraints[ConstraintName.MAX_COUNT.docName] == "inf") Integer.MAX_VALUE
+    else Integer.parseInt(constraints[ConstraintName.MAX_COUNT.docName])
+  }
   if (constraints[ConstraintName.REGEXP.docName] != null) {
     res.regExp = constraints[ConstraintName.REGEXP.docName]
     res.isInvertRegExp = inverses[ConstraintName.REGEXP.docName]!!
