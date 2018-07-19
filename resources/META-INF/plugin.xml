@@ -1,0 +1,42 @@
+<idea-plugin>
+  <id>com.jetbrains.php.php.ssr</id>
+  <name>PHP SSR</name>
+  <version>1.0</version>
+  <vendor email="kirill.smelov@jetbrains.com">Kirill Smelov</vendor>
+
+  <description><![CDATA[
+      Enter short description for your plugin here.<br>
+      <em>most HTML tags may be used</em>
+    ]]></description>
+
+  <change-notes><![CDATA[
+      Add change notes here.<br>
+      <em>most HTML tags may be used</em>
+    ]]>
+  </change-notes>
+
+  <idea-version since-build="182.0"/>
+
+  <depends>com.jetbrains.php</depends>
+  <depends>com.intellij.modules.lang</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <runLineMarkerContributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.marker.TemplateRunLineMarkerProvider"/>
+
+    <languageInjector implementation="com.jetbrains.php.ssr.dsl.injections.RegExpConstraintInjector"/>
+    <languageInjector implementation="com.jetbrains.php.ssr.dsl.injections.PhpReferenceConstraintInjector"/>
+
+    <completion.contributor language="PHP"
+                            implementationClass="com.jetbrains.php.ssr.dsl.completion.ConstraintsNamesCompletionContributor"/>
+    <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.CustomDocTagsCompletionContributor"/>
+    <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.ScopesCompletionContributor"/>
+    <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.ReferenceTemplateNamesCompletion"/>
+
+    <fileBasedIndex implementation="com.jetbrains.php.ssr.dsl.indexing.TemplateIndex"/>
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+
+</idea-plugin>
