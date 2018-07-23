@@ -15,6 +15,7 @@ import com.jetbrains.php.lang.documentation.phpdoc.psi.tags.PhpDocTag
 import com.jetbrains.php.lang.psi.PhpPsiUtil
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 import com.jetbrains.php.ssr.dsl.entities.ConstraintName
+import com.jetbrains.php.ssr.dsl.entities.ConstraintName.*
 import com.jetbrains.php.ssr.dsl.entities.CustomDocTag
 import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex
 import java.lang.Boolean.parseBoolean
@@ -52,32 +53,43 @@ private fun PhpDocTag.getAttributesList() =
 
 private fun createMatchVariableConstraint(constraints: MutableMap<String, String>,
                                           inverses: MutableMap<String, Boolean>): MatchVariableConstraint? {
-  if (!constraints.containsKey("name")) return null
+  if (!constraints.contains(NAME)) return null
   val res = MatchVariableConstraint()
-  if (constraints[ConstraintName.NAME.docName] != null) res.name = constraints[ConstraintName.NAME.docName]
-  if (constraints[ConstraintName.MIN_COUNT.docName] != null) res.minCount = Integer.parseInt(constraints[ConstraintName.MIN_COUNT.docName])
-  if (constraints[ConstraintName.MAX_COUNT.docName] != null) {
-    res.maxCount = if (constraints[ConstraintName.MAX_COUNT.docName] == "inf") Integer.MAX_VALUE
-    else Integer.parseInt(constraints[ConstraintName.MAX_COUNT.docName])
+  res.name = constraints[NAME]?:res.name
+  res.minCount = constraints.getInt(MIN_COUNT)?:res.minCount
+  res.maxCount = constraints[MAX_COUNT]?.roundToInf()?:res.maxCount
+  if (constraints.contains(REGEXP)) {
+    res.regExp = constraints[REGEXP]
+    res.isInvertRegExp = inverses[REGEXP]!!
   }
-  if (constraints[ConstraintName.REGEXP.docName] != null) {
-    res.regExp = constraints[ConstraintName.REGEXP.docName]
-    res.isInvertRegExp = inverses[ConstraintName.REGEXP.docName]!!
+  if (constraints.contains(TYPE)) {
+    res.nameOfExprType = constraints[TYPE]
+    res.isInvertExprType = inverses[TYPE]!!
   }
-  if (constraints[ConstraintName.TYPE.docName] != null) {
-    res.nameOfExprType = constraints[ConstraintName.TYPE.docName]
-    res.isInvertExprType = inverses[ConstraintName.TYPE.docName]!!
+  if (constraints.contains(REFERENCE_CONSTRAINT_NAME)) {
+    res.referenceConstraint = constraints[REFERENCE_CONSTRAINT_NAME]
+    res.isInvertReference = inverses[REFERENCE_CONSTRAINT_NAME]!!
   }
-  if (constraints[ConstraintName.REFERENCE_CONSTRAINT_NAME.docName] != null) {
-    res.referenceConstraint = constraints[ConstraintName.REFERENCE_CONSTRAINT_NAME.docName]
-    res.isInvertReference = inverses[ConstraintName.REFERENCE_CONSTRAINT_NAME.docName]!!
+  else if (constraints.contains(REFERENCE_CONSTRAINT)) {
+    res.referenceConstraint = "\"" + constraints[REFERENCE_CONSTRAINT] + "\""
+    res.isInvertReference = inverses[REFERENCE_CONSTRAINT]!!
   }
-  else if (constraints[ConstraintName.REFERENCE_CONSTRAINT.docName] != null) {
-    res.referenceConstraint = "\"" + constraints[ConstraintName.REFERENCE_CONSTRAINT.docName] + "\""
-    res.isInvertReference = inverses[ConstraintName.REFERENCE_CONSTRAINT.docName]!!
-  }
-  if (constraints[ConstraintName.TARGET.docName] != null) {
-    res.isPartOfSearchResults = parseBoolean(constraints[ConstraintName.TARGET.docName])
-  }
+  res.isPartOfSearchResults = constraints.getBoolean(TARGET)?:res.isPartOfSearchResults
   return res
 }
+
+private fun String.roundToInf(): Int = if (this == "inf") Integer.MAX_VALUE else Integer.parseInt(this)
+
+private fun <V> MutableMap<String, V>.contains(name: ConstraintName) = this[name.docName] != null
+
+private operator fun <V> MutableMap<String, V>.get(name: ConstraintName) = this[name.docName]
+private fun MutableMap<String, String>.getInt(name: ConstraintName): Int? {
+  val v = this[name.docName]
+  return if (v != null) Integer.parseInt(v) else null
+}
+
+private fun MutableMap<String, String>.getBoolean(name: ConstraintName): Boolean? {
+  val v = this[name.docName]
+  return if (v != null) parseBoolean(v) else null
+}
+
