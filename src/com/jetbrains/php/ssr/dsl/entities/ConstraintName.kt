@@ -8,4 +8,5 @@ enum class ConstraintName(val docName: String, val string: Boolean) {
   TYPE("type", true),
   REFERENCE_CONSTRAINT_NAME("referenceConstraintName", true),
   REFERENCE_CONSTRAINT("referenceConstraint", true),
+  TARGET("target", false),
 }

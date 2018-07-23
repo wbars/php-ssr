@@ -17,6 +17,7 @@ import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 import com.jetbrains.php.ssr.dsl.entities.ConstraintName
 import com.jetbrains.php.ssr.dsl.entities.CustomDocTag
 import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex
+import java.lang.Boolean.parseBoolean
 
 fun PhpDocComment.runSearchTemplate(event: AnActionEvent) {
   val configuration = this.buildConfiguration()?:return
@@ -74,6 +75,9 @@ private fun createMatchVariableConstraint(constraints: MutableMap<String, String
   else if (constraints[ConstraintName.REFERENCE_CONSTRAINT.docName] != null) {
     res.referenceConstraint = "\"" + constraints[ConstraintName.REFERENCE_CONSTRAINT.docName] + "\""
     res.isInvertReference = inverses[ConstraintName.REFERENCE_CONSTRAINT.docName]!!
+  }
+  if (constraints[ConstraintName.TARGET.docName] != null) {
+    res.isPartOfSearchResults = parseBoolean(constraints[ConstraintName.TARGET.docName])
   }
   return res
 }
