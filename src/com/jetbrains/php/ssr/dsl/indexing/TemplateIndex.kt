@@ -65,23 +65,28 @@ class TemplateIndex : FileBasedIndexExtension<String, TemplateRawData>() {
           val scopeName = docComment.findTagByName("@scope")?.getStringValue() ?: SearchScope.PROJECT.name
           val scope = if (SearchScope.names().contains(scopeName)) SearchScope.valueOf(scopeName) else SearchScope.PROJECT
           val templateRawData = TemplateRawData(replaceUnderscoresWithDollars(docComment.getPattern()), scope)
-          val children = docComment.findTagsByName("@variable")
-          for (variable in children) {
-            val attributes = variable.getAttributesList() ?: continue
-            val constraints: MutableMap<String, String> = mutableMapOf()
-            val inverses: MutableMap<String, Boolean> = mutableMapOf()
-            collectConstraints(attributes, constraints, inverses)
-            if (constraints[ConstraintName.NAME.docName] != null) {
-              val constraintRawData = ConstraintRawData(constraints, inverses)
-              templateRawData.variables.add(constraintRawData)
-            }
-          }
+          templateRawData.variables.addAll(docComment.parseVariables())
           map[name] = templateRawData
         }
       }
       map
     }
   }
+}
+
+fun PhpDocComment.parseVariables(): List<ConstraintRawData> {
+  val variables = mutableListOf<ConstraintRawData>()
+  for (variable in findTagsByName("@variable")) {
+    val attributes = variable.getAttributesList() ?: continue
+    val constraints: MutableMap<String, String> = mutableMapOf()
+    val inverses: MutableMap<String, Boolean> = mutableMapOf()
+    collectConstraints(attributes, constraints, inverses)
+    if (constraints[ConstraintName.NAME.docName] != null) {
+      val constraintRawData = ConstraintRawData(constraints, inverses)
+      variables.add(constraintRawData)
+    }
+  }
+  return variables
 }
 
 private fun collectConstraints(attributes: PsiElement,

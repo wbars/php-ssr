@@ -32,6 +32,7 @@
     <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.ScopesCompletionContributor"/>
     <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.ReferenceTemplateNamesCompletionContributor"/>
     <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.VariableNamesInAttributeCompletionContributor"/>
+    <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.VariableNameInPatternCompletionContributor"/>
 
     <fileBasedIndex implementation="com.jetbrains.php.ssr.dsl.indexing.TemplateIndex"/>
   </extensions>
