@@ -38,7 +38,10 @@
   </extensions>
 
   <actions>
-    <!-- Add your actions here -->
+    <action id="com.jetbrains.php.ssr.dsl.actions.NewSearchTemplateAction" class="com.jetbrains.php.ssr.dsl.actions.NewSearchTemplateAction"
+            text="New search template" description="New search template">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
   </actions>
 
 </idea-plugin>
