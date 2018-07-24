@@ -25,6 +25,8 @@ import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex.Companion.not
 import com.jetbrains.php.ssr.dsl.marker.findTagByName
 import com.jetbrains.php.ssr.dsl.marker.getStringValue
 import com.jetbrains.php.ssr.dsl.marker.isSSRTemplateTag
+import com.jetbrains.php.ssr.dsl.util.VariableInfo
+import com.jetbrains.php.ssr.dsl.util.collectVariables
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -62,7 +64,7 @@ class TemplateIndex : FileBasedIndexExtension<String, TemplateRawData>() {
           val name = docComment.findTagByName(CustomDocTag.SSR_TEMPLATE.displayName)?.getStringValue() ?: continue
           val scopeName = docComment.findTagByName("@scope")?.getStringValue() ?: SearchScope.PROJECT.name
           val scope = if (SearchScope.names().contains(scopeName)) SearchScope.valueOf(scopeName) else SearchScope.PROJECT
-          val templateRawData = TemplateRawData(docComment.getPattern(), scope)
+          val templateRawData = TemplateRawData(replaceUnderscoresWithDollars(docComment.getPattern()), scope)
           val children = docComment.findTagsByName("@variable")
           for (variable in children) {
             val attributes = variable.getAttributesList() ?: continue
@@ -121,29 +123,26 @@ fun PsiElement.ssrDoc(): Boolean {
   return false
 }
 
-private fun PhpDocComment.getPattern(): String {
+fun PhpDocComment.getPattern(): String {
   val nextDocConfiguration: PsiElement? = PhpPsiUtil.getNextSiblingByCondition(this) { it is PhpDocComment && it.ssrDoc() }
   val endOffset = nextDocConfiguration?.textOffset ?: containingFile.textLength
-  return replaceUnderscoresWithDollars(containingFile.text.substring(textRange.endOffset until endOffset).trim())
+  return containingFile.text.substring(textRange.endOffset until endOffset).trim()
 }
 
 private fun replaceUnderscoresWithDollars(searchPattern: String): String {
+  val variables: List<VariableInfo> = collectVariables(searchPattern)
+  if (variables.isEmpty()) return searchPattern
   val sb = StringBuilder()
-  var insideVariable = false
-  for (i in searchPattern.indices) {
-    val c = searchPattern[i]
-    if (!insideVariable && c == '_' && i < searchPattern.length - 1 && Character.isJavaIdentifierPart(searchPattern[i + 1])) {
-      insideVariable = true
-      if (sb.last() != '$') sb.append('$')
-      continue
-    }
-    else if (!Character.isJavaIdentifierPart(c) && insideVariable) {
-      sb.append('$')
-      insideVariable = false
-    }
-    sb.append(c)
+  var lastOffset = 0
+  for (variable in variables) {
+    sb.append(searchPattern.substring(lastOffset, variable.range.startOffset))
+    sb.append("$" + variable.name + "$")
+    lastOffset = variable.range.endOffset
   }
-  if (insideVariable) sb.append('$')
+  val lastEndOffset = variables.last().range.endOffset
+  if (lastEndOffset < searchPattern.length) {
+    sb.append(searchPattern.substring(lastEndOffset))
+  }
   return sb.toString()
 }
 
