@@ -11,7 +11,9 @@ $_a->_b($c);
 /**
  * @structuralSearchTemplate("fopen call without binary safe modifier")
  * @scope("project")
- * @variable(name = "c", referenceConstraint="fopen($_a, \"_b\", $_c, $_d)")
+ * @variable(name = "b", regExp=!"^.*b$")
+ * @variable(name = "c", minCount=0, maxCount=1)
+ * @variable(name = "d", minCount=0, maxCount=1)
  */
 fopen($_a, "_b", $_c, $_d);
 
