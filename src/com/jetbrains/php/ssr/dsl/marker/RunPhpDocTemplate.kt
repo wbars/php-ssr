@@ -1,6 +1,7 @@
 package com.jetbrains.php.ssr.dsl.marker
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
 import com.intellij.structuralsearch.MatchVariableConstraint
@@ -18,6 +19,7 @@ import com.jetbrains.php.ssr.dsl.entities.ConstraintName
 import com.jetbrains.php.ssr.dsl.entities.ConstraintName.*
 import com.jetbrains.php.ssr.dsl.entities.CustomDocTag
 import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex
+import com.jetbrains.php.ssr.dsl.indexing.TemplateRawData
 import java.lang.Boolean.parseBoolean
 
 fun PhpDocComment.runSearchTemplate(event: AnActionEvent) {
@@ -28,13 +30,16 @@ fun PhpDocComment.runSearchTemplate(event: AnActionEvent) {
 private fun PhpDocComment.buildConfiguration(): Configuration? {
   val name = findTagByName(CustomDocTag.SSR_TEMPLATE.displayName)?.getStringValue() ?: return null
   val templateRawData = TemplateIndex.findTemplateRawData(project, name) ?: return null
+  return templateRawData.buildConfiguration(project)
+}
+
+fun TemplateRawData.buildConfiguration(project: Project): SearchConfiguration {
   val configuration = SearchConfiguration()
-  configuration.matchOptions.scope = templateRawData.scope.createScope(project)
+  configuration.matchOptions.scope = scope.createScope(project)
   configuration.matchOptions.fileType = PhpFileType.INSTANCE
-  configuration.matchOptions.searchPattern = templateRawData.pattern
-  for (variable in templateRawData.variables) {
-    val constraint: MatchVariableConstraint = createMatchVariableConstraint(variable.constraints,
-                                                                                                             variable.inverses) ?: continue
+  configuration.matchOptions.searchPattern = pattern
+  for (variable in variables) {
+    val constraint: MatchVariableConstraint = createMatchVariableConstraint(variable.constraints, variable.inverses) ?: continue
     configuration.matchOptions.addVariableConstraint(constraint)
   }
   return configuration

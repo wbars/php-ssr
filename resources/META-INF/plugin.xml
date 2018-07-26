@@ -30,11 +30,17 @@
                             implementationClass="com.jetbrains.php.ssr.dsl.completion.ConstraintsNamesCompletionContributor"/>
     <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.CustomDocTagsCompletionContributor"/>
     <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.ScopesCompletionContributor"/>
-    <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.ReferenceTemplateNamesCompletionContributor"/>
-    <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.VariableNamesInAttributeCompletionContributor"/>
-    <completion.contributor language="PHP" implementationClass="com.jetbrains.php.ssr.dsl.completion.VariableNameInPatternCompletionContributor"/>
+    <completion.contributor language="PHP"
+                            implementationClass="com.jetbrains.php.ssr.dsl.completion.ReferenceTemplateNamesCompletionContributor"/>
+    <completion.contributor language="PHP"
+                            implementationClass="com.jetbrains.php.ssr.dsl.completion.VariableNamesInAttributeCompletionContributor"/>
+    <completion.contributor language="PHP"
+                            implementationClass="com.jetbrains.php.ssr.dsl.completion.VariableNameInPatternCompletionContributor"/>
 
     <fileBasedIndex implementation="com.jetbrains.php.ssr.dsl.indexing.TemplateIndex"/>
+
+    <localInspection shortName="PHP_SSR_Inspection" groupName="General" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.php.ssr.dsl.inspections.StructuralSearchInspection" displayName="PHP_SSR_Inspection"/>
   </extensions>
 
   <actions>
