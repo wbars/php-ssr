@@ -35,7 +35,7 @@ class TemplateIndex : FileBasedIndexExtension<String, TemplateRawData>() {
     const val not = "=!"
     private val key = ID.create<String, TemplateRawData>("php.ssr.dsl.template")
     fun findTemplateRawData(project: Project, name: String): TemplateRawData? =
-      ContainerUtil.getFirstItem(FileBasedIndex.getInstance().getValues(key, name, GlobalSearchScope.projectScope(project)))
+      FileBasedIndex.getInstance().getValues(key, name, GlobalSearchScope.projectScope(project)).firstOrNull()
 
     fun getAllTemplateNames(project: Project): Collection<String> = FileBasedIndex.getInstance().getAllKeys(key, project)
   }
