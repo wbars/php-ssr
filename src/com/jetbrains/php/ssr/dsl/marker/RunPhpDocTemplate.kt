@@ -35,6 +35,7 @@ private fun PhpDocComment.buildConfiguration(): Configuration? {
 
 fun TemplateRawData.buildConfiguration(project: Project): SearchConfiguration {
   val configuration = SearchConfiguration()
+  configuration.name = name
   configuration.matchOptions.scope = scope.createScope(project)
   configuration.matchOptions.fileType = PhpFileType.INSTANCE
   configuration.matchOptions.searchPattern = pattern

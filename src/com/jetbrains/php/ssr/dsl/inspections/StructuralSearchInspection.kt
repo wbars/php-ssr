@@ -16,10 +16,6 @@ import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex
 import com.jetbrains.php.ssr.dsl.marker.buildConfiguration
 
 class StructuralSearchInspection: PhpInspection() {
-  override fun getShortName(): String {
-    return "PHP_SSR_Inspection"
-  }
-
   override fun buildVisitor(holder: ProblemsHolder, onTheFly: Boolean): PsiElementVisitor {
     return object: PhpElementVisitor() {
       val matcher = Matcher(holder.manager.project)

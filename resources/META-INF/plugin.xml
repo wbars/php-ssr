@@ -39,8 +39,8 @@
 
     <fileBasedIndex implementation="com.jetbrains.php.ssr.dsl.indexing.TemplateIndex"/>
 
-    <localInspection shortName="PHP_SSR_Inspection" groupName="General" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.php.ssr.dsl.inspections.StructuralSearchInspection" displayName="PHP_SSR_Inspection"/>
+    <localInspection shortName="StructuralSearchInspection" groupName="General" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.php.ssr.dsl.inspections.StructuralSearchInspection" displayName="PHP Structural Search Inspection"/>
     <psi.referenceContributor implementation="com.jetbrains.php.ssr.dsl.codeinsight.ConstrainNameReferenceContributor" />
   </extensions>
   <extensions defaultExtensionNs="com.jetbrains.php">

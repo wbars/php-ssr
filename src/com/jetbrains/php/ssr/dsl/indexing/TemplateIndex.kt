@@ -66,7 +66,7 @@ class TemplateIndex : FileBasedIndexExtension<String, TemplateRawData>() {
           val name = docComment.findTagByName(CustomDocTag.SSR_TEMPLATE.displayName)?.getStringValue() ?: continue
           val scopeName = docComment.findTagByName("@scope")?.getStringValue() ?: SearchScope.PROJECT.name
           val scope = if (SearchScope.names().contains(scopeName)) SearchScope.valueOf(scopeName) else SearchScope.PROJECT
-          val templateRawData = TemplateRawData(replaceUnderscoresWithDollars(docComment.getPattern()), scope)
+          val templateRawData = TemplateRawData(name, replaceUnderscoresWithDollars(docComment.getPattern()), scope)
           templateRawData.variables.addAll(docComment.parseVariables())
           map[name] = templateRawData
         }
@@ -153,13 +153,14 @@ private fun replaceUnderscoresWithDollars(searchPattern: String): String {
   return sb.toString()
 }
 
-data class TemplateRawData(val pattern: String, val scope: SearchScope, val variables: MutableList<ConstraintRawData> = mutableListOf())
+data class TemplateRawData(val name: String, val pattern: String, val scope: SearchScope, val variables: MutableList<ConstraintRawData> = mutableListOf())
 data class ConstraintRawData(val constraints: MutableMap<String, String> = mutableMapOf(),
                              val inverses: MutableMap<String, Boolean> = mutableMapOf())
 
 class TemplateRawDataKeyExternalizer : DataExternalizer<TemplateRawData> {
   override fun save(out: DataOutput, data: TemplateRawData?) {
     if (data != null) {
+      out.writeUTF(data.name)
       out.writeUTF(data.pattern)
       out.writeUTF(data.scope.name)
       out.writeInt(data.variables.size)
@@ -180,9 +181,10 @@ class TemplateRawDataKeyExternalizer : DataExternalizer<TemplateRawData> {
   }
 
   override fun read(input: DataInput): TemplateRawData {
+    val name = input.readUTF()
     val pattern = input.readUTF()
     val scope = SearchScope.valueOf(input.readUTF())
-    val result = TemplateRawData(pattern, scope)
+    val result = TemplateRawData(name, pattern, scope)
     val variablesSize = input.readInt()
     for (i in 0 until variablesSize) {
       val constraintRawData = ConstraintRawData()
