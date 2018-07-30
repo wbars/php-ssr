@@ -42,6 +42,9 @@
     <localInspection shortName="PHP_SSR_Inspection" groupName="General" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.php.ssr.dsl.inspections.StructuralSearchInspection" displayName="PHP_SSR_Inspection"/>
   </extensions>
+  <extensions defaultExtensionNs="com.jetbrains.php">
+    <libraryRoot id="structuralSearchScripts" path="/structuralSearchScripts/" runtime="false" />
+  </extensions>
 
   <actions>
     <action id="com.jetbrains.php.ssr.dsl.actions.NewSearchTemplateAction" class="com.jetbrains.php.ssr.dsl.actions.NewSearchTemplateAction"
