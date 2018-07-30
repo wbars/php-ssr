@@ -4,10 +4,10 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.util.ProcessingContext
-import com.jetbrains.php.PhpIcons
-import com.jetbrains.php.completion.insert.PhpInsertHandlerUtil
 import com.jetbrains.php.lang.documentation.phpdoc.lexer.PhpDocTokenTypes.*
-import com.jetbrains.php.ssr.dsl.entities.ConstraintName
+import com.jetbrains.php.lang.psi.elements.Field
+import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
+import com.jetbrains.php.ssr.dsl.indexing.getSearchConstraints
 
 class ConstraintsNamesCompletionContributor : CompletionContributor() {
   init {
@@ -28,20 +28,13 @@ class ConstraintsNamesCompletionContributor : CompletionContributor() {
 }
 
 class ConstraintsNamesCompletionProvider : CompletionProvider<CompletionParameters>() {
-
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
-    for (value in ConstraintName.values()) {
-      result.addElement(
-        LookupElementBuilder.create(value.docName)
-          .withIcon(PhpIcons.PARAMETER)
-          .withInsertHandler { ctx, _ ->
-            PhpInsertHandlerUtil.insertStringAtCaret(ctx.editor, "=")
-            if (value.string) {
-              PhpInsertHandlerUtil.insertStringAtCaret(ctx.editor, "\"\"")
-              ctx.editor.stepCaretBack()
-            }
-          })
+    val project = parameters.position.project
+    for (constraint in getSearchConstraints(project) ?: return) {
+      val value = constraint.getValueContents() ?: return
+      result.addElement(LookupElementBuilder.create(value).withPsiElement(constraint))
     }
   }
-
 }
+
+fun Field.getValueContents() = (defaultValue as? StringLiteralExpression)?.contents

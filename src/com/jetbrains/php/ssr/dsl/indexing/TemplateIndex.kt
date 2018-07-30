@@ -10,6 +10,7 @@ import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
+import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.PhpFileType
 import com.jetbrains.php.lang.documentation.phpdoc.lexer.PhpDocTokenTypes
 import com.jetbrains.php.lang.documentation.phpdoc.parser.PhpDocElementTypes
@@ -17,6 +18,7 @@ import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment
 import com.jetbrains.php.lang.documentation.phpdoc.psi.tags.PhpDocTag
 import com.jetbrains.php.lang.psi.PhpFile
 import com.jetbrains.php.lang.psi.PhpPsiUtil
+import com.jetbrains.php.lang.psi.elements.Field
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 import com.jetbrains.php.ssr.dsl.entities.ConstraintName
 import com.jetbrains.php.ssr.dsl.entities.CustomDocTag
@@ -197,4 +199,9 @@ class TemplateRawDataKeyExternalizer : DataExternalizer<TemplateRawData> {
     }
     return result
   }
+}
+
+fun getSearchConstraints(project: Project): List<Field>? {
+  val index = PhpIndex.getInstance(project)
+  return index.getClassesByFQN("\\StructuralSearchConstraints").firstOrNull()?.ownFields?.filter { it.isConstant }
 }
