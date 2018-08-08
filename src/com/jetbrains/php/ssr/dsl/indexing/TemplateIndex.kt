@@ -1,10 +1,11 @@
 package com.jetbrains.php.ssr.dsl.indexing
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
@@ -38,6 +39,10 @@ class TemplateIndex : FileBasedIndexExtension<String, TemplateRawData>() {
       FileBasedIndex.getInstance().getValues(key, name, GlobalSearchScope.allScope(project)).firstOrNull()
 
     fun getAllTemplateNames(project: Project): Collection<String> = FileBasedIndex.getInstance().getAllKeys(key, project)
+
+    fun getTemplateFiles(project: Project, name: String): MutableCollection<VirtualFile> {
+      return FileBasedIndex.getInstance().getContainingFiles(key, name, GlobalSearchScope.allScope(project))
+    }
   }
 
   private val externalizer = TemplateRawDataKeyExternalizer()
@@ -57,22 +62,25 @@ class TemplateIndex : FileBasedIndexExtension<String, TemplateRawData>() {
   override fun getIndexer(): DataIndexer<String, TemplateRawData, FileContent> {
     return DataIndexer { inputData ->
       val map = ContainerUtil.newHashMap<String, TemplateRawData>()
-      val file = ObjectUtils.tryCast(inputData.psiFile, PhpFile::class.java)
-      if (file != null) {
-        for (docComment in PsiTreeUtil.findChildrenOfType(file, PhpDocComment::class.java)) {
-          if (!docComment.ssrDoc()) continue
-          val name = docComment.findTagByName(CustomDocTag.SSR_TEMPLATE.displayName)?.getStringValue() ?: continue
-          val scopeName = docComment.findTagByName("@scope")?.getStringValue() ?: SearchScope.PROJECT.name
-          val scope = if (SearchScope.names().contains(scopeName)) SearchScope.valueOf(scopeName) else SearchScope.PROJECT
-          val severityName = docComment.findTagByName(CustomDocTag.SEVERITY.displayName)?.getStringValue() ?: Severity.DEFAULT.name
-          val templateRawData = TemplateRawData(name, replaceUnderscoresWithDollars(docComment.getPattern()), scope, severityName.toSeverity())
-          templateRawData.variables.addAll(docComment.parseVariables())
-          map[name] = templateRawData
-        }
+      for (docComment in getTemplateDocs(inputData.psiFile)) {
+        val name = docComment.templateName() ?: continue
+        val scopeName = docComment.findTagByName("@scope")?.getStringValue() ?: SearchScope.PROJECT.name
+        val scope = if (SearchScope.names().contains(scopeName)) SearchScope.valueOf(scopeName) else SearchScope.PROJECT
+        val severityName = docComment.findTagByName(CustomDocTag.SEVERITY.displayName)?.getStringValue() ?: Severity.DEFAULT.name
+        val templateRawData = TemplateRawData(name, replaceUnderscoresWithDollars(docComment.getPattern()), scope, severityName.toSeverity())
+        templateRawData.variables.addAll(docComment.parseVariables())
+        map[name] = templateRawData
       }
       map
     }
   }
+}
+
+fun getTemplateDocs(psiFile: PsiFile?): List<PhpDocComment> {
+  if (psiFile is PhpFile) {
+    return PsiTreeUtil.findChildrenOfType(psiFile, PhpDocComment::class.java).filter { it.ssrDoc() }
+  }
+  return emptyList()
 }
 
 fun PhpDocComment.parseVariables(): List<ConstraintRawData> {
@@ -89,6 +97,8 @@ fun PhpDocComment.parseVariables(): List<ConstraintRawData> {
   }
   return variables
 }
+fun PhpDocComment.templateName() =
+  findTagByName(CustomDocTag.SSR_TEMPLATE.displayName)?.getStringValue()
 
 private fun collectConstraints(attributes: PsiElement,
                                constraints: MutableMap<String, String>,

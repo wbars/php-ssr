@@ -7,6 +7,7 @@ import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.PsiNamePatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.util.ProcessingContext
 import com.jetbrains.php.lang.documentation.phpdoc.lexer.PhpDocTokenTypes
 import com.jetbrains.php.lang.documentation.phpdoc.parser.PhpDocElementTypes
@@ -52,4 +53,6 @@ object Patterns {
     2, psiElement(PhpDocElementTypes.phpDocAttributeList)
     .withParent(Patterns.docTagWithName(docTag.displayName))
   )
+
+  val envSettingTemplateName: PsiElementPattern.Capture<JsonStringLiteral> = psiElement(JsonStringLiteral::class.java).with(Patterns.firstChild).withSuperParent(3, PsiFile::class.java)
 }

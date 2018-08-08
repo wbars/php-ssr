@@ -47,6 +47,7 @@
     <localInspection shortName="StructuralSearchInspection" groupName="General" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.php.ssr.dsl.inspections.StructuralSearchInspection" displayName="PHP Structural Search Inspection"/>
     <psi.referenceContributor implementation="com.jetbrains.php.ssr.dsl.codeinsight.ConstrainNameReferenceContributor" />
+    <psi.referenceContributor implementation="com.jetbrains.php.ssr.dsl.codeinsight.EnvironmentSettingsTemplateNameReferenceContributor" />
   </extensions>
   <extensions defaultExtensionNs="com.jetbrains.php">
     <libraryRoot id="structuralSearchScripts" path="/structuralSearchScripts/" runtime="false" />

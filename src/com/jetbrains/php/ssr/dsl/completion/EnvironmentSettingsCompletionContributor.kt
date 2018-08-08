@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.jetbrains.php.lang.psi.PhpPsiUtil
+import com.jetbrains.php.ssr.dsl.completion.Patterns.envSettingTemplateName
 import com.jetbrains.php.ssr.dsl.completion.Patterns.firstChild
 import com.jetbrains.php.ssr.dsl.completion.Patterns.not
 import com.jetbrains.php.ssr.dsl.entities.CustomDocTag
@@ -19,7 +20,7 @@ import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex
 
 class EnvironmentSettingsCompletionContributor: CompletionContributor() {
   init {
-    extend(CompletionType.BASIC, psiElement().withParent(psiElement(JsonStringLiteral::class.java).with(firstChild).withSuperParent(3, PsiFile::class.java)), TemplateNamesProvider())
+    extend(CompletionType.BASIC, psiElement().withParent(envSettingTemplateName), TemplateNamesProvider())
     extend(CompletionType.BASIC, psiElement().withParent(psiElement(JsonStringLiteral::class.java).withParent(JsonProperty::class.java).withSuperParent(3, JsonProperty::class.java).with(firstChild)), EnvironmentSettingsNamesProvider())
     extend(CompletionType.BASIC, psiElement().withParent(psiElement(JsonStringLiteral::class.java).withParent(JsonProperty::class.java).with(not(firstChild))), EnvironmentSettingsValuesProvider())
   }

@@ -48,13 +48,13 @@ fun TemplateRawData.buildConfiguration(project: Project): SearchConfiguration {
 
 fun PhpDocTag.getStringValue(): String? = getAttributesList()?.getChildByCondition(StringLiteralExpression.INSTANCEOF)?.contents
 
-private fun PsiElement.getChildByCondition(instanceof: Condition<PsiElement>) =
+fun PsiElement.getChildByCondition(instanceof: Condition<PsiElement>) =
   PhpPsiUtil.getChildByCondition<StringLiteralExpression>(this, instanceof)
 
 fun PhpDocComment.findTagByName(name: String) =
   PhpPsiUtil.getChildByCondition<PhpDocTag>(this) { it is PhpDocTag && it.name == name }
 
-private fun PhpDocTag.getAttributesList() =
+fun PhpDocTag.getAttributesList() =
   PhpPsiUtil.getChildOfType(this, PhpDocElementTypes.phpDocAttributeList)
 
 private fun createMatchVariableConstraint(constraints: MutableMap<String, String>,
