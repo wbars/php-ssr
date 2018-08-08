@@ -38,7 +38,7 @@ class TemplateIndex : FileBasedIndexExtension<String, TemplateRawData>() {
     fun findTemplateRawData(project: Project, name: String): TemplateRawData? =
       FileBasedIndex.getInstance().getValues(key, name, GlobalSearchScope.allScope(project)).firstOrNull()
 
-    fun getAllTemplateNames(project: Project): Collection<String> = FileBasedIndex.getInstance().getAllKeys(key, project)
+    fun getAllTemplateNames(project: Project): Collection<String> = FileBasedIndex.getInstance().getAllKeys(key, project).filterNot { getTemplateFiles(project, it).isEmpty() }
 
     fun getTemplateFiles(project: Project, name: String): MutableCollection<VirtualFile> {
       return FileBasedIndex.getInstance().getContainingFiles(key, name, GlobalSearchScope.allScope(project))
