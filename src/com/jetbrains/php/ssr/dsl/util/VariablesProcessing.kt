@@ -35,6 +35,6 @@ fun collectVariables(searchPattern: String): List<VariableInfo> {
 private fun getStartOffset(i: Int, searchPattern: String) = if (i > 0 && searchPattern[i - 1] == '$') i - 1 else i
 
 private fun variableStart(index: Int, searchPattern: String) =
-  searchPattern[index] == '_' && index < searchPattern.length - 1 && Character.isJavaIdentifierPart(searchPattern[index + 1])
+  (index == 0 || !searchPattern[index-1].isLetter()) && searchPattern[index] == '_' && index < searchPattern.length - 1 && Character.isJavaIdentifierPart(searchPattern[index + 1])
 
 data class VariableInfo(val range: Segment, val name: String)
