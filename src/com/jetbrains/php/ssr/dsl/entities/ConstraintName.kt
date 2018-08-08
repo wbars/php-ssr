@@ -6,7 +6,7 @@ enum class ConstraintName(val docName: String, val string: Boolean) {
   MIN_COUNT("minCount", false),
   MAX_COUNT("maxCount", false),
   TYPE("type", true),
-  REFERENCE_CONSTRAINT_NAME("referenceConstraintName", true),
-  REFERENCE_CONSTRAINT("referenceConstraint", true),
+  REFERENCE_CONSTRAINT_NAME("referenceName", true),
+  REFERENCE_CONSTRAINT("reference", true),
   TARGET("target", false),
 }
