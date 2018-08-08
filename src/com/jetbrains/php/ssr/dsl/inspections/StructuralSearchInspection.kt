@@ -34,7 +34,11 @@ class StructuralSearchInspection : PhpInspection() {
         }
         val configurations = configurationsRawData.map { it.buildConfiguration(element.project) }
         val cache: Map<Configuration, MatchContext> = mutableMapOf()
-        matcher.precompileOptions(configurations, cache)
+        try {
+          matcher.precompileOptions(configurations, cache)
+        } catch (ignored: Exception) {
+          return
+        }
         val matchedNodes = SsrFilteringNodeIterator(element)
         for (configuration in configurations) {
           val configurationSetting = settings.find { it.templateName.toUpperCase() == configuration.name.toUpperCase() }
