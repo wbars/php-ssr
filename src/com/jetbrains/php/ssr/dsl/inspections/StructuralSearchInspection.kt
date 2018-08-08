@@ -1,147 +1,94 @@
 package com.jetbrains.php.ssr.dsl.inspections
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.dupLocator.iterators.CountingNodeIterator
-import com.intellij.ide.DataManager
-import com.intellij.ide.util.ChooseElementsDialog
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.structuralsearch.MatchResult
 import com.intellij.structuralsearch.Matcher
 import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator
 import com.intellij.structuralsearch.plugin.ui.Configuration
-import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.components.JBList
-import com.intellij.util.PairProcessor
 import com.jetbrains.php.lang.inspections.PhpInspection
 import com.jetbrains.php.lang.psi.visitors.PhpElementVisitor
+import com.jetbrains.php.ssr.dsl.entities.SearchScope
+import com.jetbrains.php.ssr.dsl.entities.Severity
+import com.jetbrains.php.ssr.dsl.indexing.TemplateEnvironmentSetting
 import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex
+import com.jetbrains.php.ssr.dsl.indexing.TemplateRawData
+import com.jetbrains.php.ssr.dsl.indexing.TemplatesEnvironmentIndex
 import com.jetbrains.php.ssr.dsl.marker.buildConfiguration
-import org.jdom.Element
-import java.awt.Component
-import javax.swing.*
 
 class StructuralSearchInspection : PhpInspection() {
-  val myExcludedTemplatesNames: MutableList<String> = mutableListOf()
-
   override fun buildVisitor(holder: ProblemsHolder, onTheFly: Boolean): PsiElementVisitor {
     return object : PhpElementVisitor() {
       val matcher = Matcher(holder.manager.project)
-      val processor: PairProcessor<MatchResult, Configuration> = PairProcessor { matchResult, configuration ->
-        holder.registerProblem(matchResult.match, configuration.name)
-        true
-      }
 
       override fun visitElement(element: PsiElement?) {
         if (element == null) return
-        val configurations = getIncludedTemplateNames(element.project, myExcludedTemplatesNames).mapNotNull {
-          TemplateIndex.findTemplateRawData(element.project, it)?.buildConfiguration(element.project)
+        val settings = TemplatesEnvironmentIndex.getAllTemplatesSettings(holder.manager.project)
+        val excludedTemplatesNames = settings.filter { it.severity == Severity.OFF }.map { it.templateName }.toSet()
+        val configurationsRawData = getIncludedTemplateNames(element.project, excludedTemplatesNames).mapNotNull {
+          TemplateIndex.findTemplateRawData(element.project, it)
         }
+        val configurations = configurationsRawData.map { it.buildConfiguration(element.project) }
         val cache: Map<Configuration, MatchContext> = mutableMapOf()
         matcher.precompileOptions(configurations, cache)
         val matchedNodes = SsrFilteringNodeIterator(element)
         for (configuration in configurations) {
+          val configurationSetting = settings.find { it.templateName.toUpperCase() == configuration.name.toUpperCase() }
+          val scope: SearchScope? = getSearchScope(configurationSetting, configurationsRawData, configuration.name)
+          if (scope != null && !scope.createScope(element.project).contains(element.containingFile.virtualFile)) continue
+          val severity: Severity? = getSeverity(configurationSetting, configurationsRawData, configuration.name)
+          if (severity == Severity.OFF) continue
           val context = cache[configuration] ?: continue
           if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes)) {
-            matcher.processMatchesInElement(context, configuration, CountingNodeIterator(context.pattern.nodeCount, matchedNodes),
-                                            processor)
+            matcher.processMatchesInElement(context, configuration,
+                                            CountingNodeIterator(context.pattern.nodeCount, matchedNodes)) { matchResult, c ->
+              if (severity != null && severity != Severity.DEFAULT) {
+                holder.registerProblem(matchResult.match, c.name, severity.highlightType)
+              }
+              else {
+                holder.registerProblem(matchResult.match, c.name)
+              }
+              true
+            }
             matchedNodes.reset()
           }
         }
       }
     }
   }
-
-  override fun createOptionsPanel(): JComponent? {
-    return ExcludedTemplateInspectionOptions(myExcludedTemplatesNames).component
-  }
-
-  override fun readSettings(node: Element) {
-    myExcludedTemplatesNames.clear()
-    node.children.forEach {
-      if (it.name == "template") {
-        myExcludedTemplatesNames.add(it.getAttributeValue("name"))
-      }
-    }
-    super.readSettings(node)
-  }
-
-  override fun writeSettings(node: Element) {
-    myExcludedTemplatesNames.forEach { node.addContent(Element("template").setAttribute("name", it)) }
-    super.writeSettings(node)
-  }
 }
 
-private val ExcludedTemplateInspectionOptions.component: JComponent
-  get() {
-    val panel = JPanel()
-    panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
-    val table = ToolbarDecorator.createDecorator(myTemplatesNamesList)
-      .setAddActionName("Exclude templates")
-      .setAddAction {
-        val project = panel.getProject() ?: return@setAddAction
-        val chooser = ChooseTemplateDialog(panel, getIncludedTemplateNames(project, myTemplatesNames))
-        chooser.show()
-        myTemplatesNames.addAll(chooser.chosenElements)
-        templatesChanged(project)
-      }
-      .setRemoveAction {
-        myTemplatesNamesList.selectedValuesList.forEach { myTemplatesNames.remove(it) }
-        templatesChanged(panel.getProject() ?: return@setRemoveAction)
-      }
-      .disableUpAction()
-      .disableDownAction()
-      .createPanel()
-    panel.add(table)
-    return panel
+private fun getSeverity(configurationSetting: TemplateEnvironmentSetting?,
+                        configurationsRawData: List<TemplateRawData>,
+                        name: String): Severity? {
+  val severity = configurationSetting?.severity
+  if (severity == null || severity == Severity.DEFAULT) {
+    return configurationsRawData.find { it.name == name }?.severity ?: severity
   }
-
-private fun JPanel.getProject() = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))
-
-private fun ExcludedTemplateInspectionOptions.templatesChanged(project: Project) {
-  (myTemplatesNamesList.model as ExcludedTemplateInspectionOptions.MyModel).fireContentsChanged()
-  DaemonCodeAnalyzer.getInstance(project).restart()
+  return severity
 }
 
-class ExcludedTemplateInspectionOptions(val myTemplatesNames: MutableList<String>) {
-  val myTemplatesNamesList: JBList<String> = JBList(MyModel())
-
-  init {
-    myTemplatesNamesList.cellRenderer = object : DefaultListCellRenderer() {
-      override fun getListCellRendererComponent(list: JList<*>?,
-                                                value: Any?,
-                                                index: Int,
-                                                isSelected: Boolean,
-                                                cellHasFocus: Boolean): Component {
-        val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus) as JLabel
-        component.text = myTemplatesNames[index]
-        return component
-      }
-    }
+private fun getSearchScope(configurationSetting: TemplateEnvironmentSetting?,
+                           configurationsRawData: Collection<TemplateRawData>,
+                           name: String): SearchScope? {
+  val scope = configurationSetting?.scope
+  if (scope == null || scope == SearchScope.PROJECT) {
+    return configurationsRawData.find { it.name == name }?.scope ?: scope
   }
-
-  inner class MyModel : AbstractListModel<String>() {
-    override fun getElementAt(index: Int): String = myTemplatesNames[index]
-
-    override fun getSize() = myTemplatesNames.size
-
-    fun fireContentsChanged() {
-      fireContentsChanged(myTemplatesNamesList, -1, -1)
-    }
-  }
-
-  inner class ChooseTemplateDialog(parent: JComponent, templates: List<String>) : ChooseElementsDialog<String>(parent, templates,
-                                                                                                               "Choose template to exclude") {
-    override fun getItemIcon(item: String?): Nothing? = null
-
-    override fun getItemText(item: String?) = item ?: ""
-  }
+  return scope;
 }
 
-fun getIncludedTemplateNames(project: Project,
-                             templateNames: Collection<String>) = TemplateIndex.getAllTemplateNames(
+private val Severity.highlightType: ProblemHighlightType
+  get() = when (this) {
+    Severity.ERROR -> ProblemHighlightType.GENERIC_ERROR
+    Severity.WARNING -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+    Severity.WEAK_WARNING -> ProblemHighlightType.WEAK_WARNING
+    else -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+  }
+
+fun getIncludedTemplateNames(project: Project, templateNames: Collection<String>) = TemplateIndex.getAllTemplateNames(
   project).filter { !templateNames.contains(it) }

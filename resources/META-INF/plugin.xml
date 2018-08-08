@@ -36,8 +36,13 @@
                             implementationClass="com.jetbrains.php.ssr.dsl.completion.VariableNamesInAttributeCompletionContributor"/>
     <completion.contributor language="PHP"
                             implementationClass="com.jetbrains.php.ssr.dsl.completion.VariableNameInPatternCompletionContributor"/>
+    <completion.contributor language="PHP"
+                            implementationClass="com.jetbrains.php.ssr.dsl.completion.SeverityCompletionContributor"/>
+    <completion.contributor language="JSON"
+                            implementationClass="com.jetbrains.php.ssr.dsl.completion.EnvironmentSettingsCompletionContributor"/>
 
     <fileBasedIndex implementation="com.jetbrains.php.ssr.dsl.indexing.TemplateIndex"/>
+    <fileBasedIndex implementation="com.jetbrains.php.ssr.dsl.indexing.TemplatesEnvironmentIndex"/>
 
     <localInspection shortName="StructuralSearchInspection" groupName="General" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.php.ssr.dsl.inspections.StructuralSearchInspection" displayName="PHP Structural Search Inspection"/>
