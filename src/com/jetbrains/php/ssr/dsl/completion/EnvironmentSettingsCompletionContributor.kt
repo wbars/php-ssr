@@ -19,8 +19,8 @@ import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex
 
 class EnvironmentSettingsCompletionContributor: CompletionContributor() {
   init {
-    extend(CompletionType.BASIC, psiElement().withParent(psiElement(JsonStringLiteral::class.java).with(firstChild)), TemplateNamesProvider())
-    extend(CompletionType.BASIC, psiElement().withParent(psiElement(JsonStringLiteral::class.java).withParent(JsonProperty::class.java).with(firstChild)), EnvironmentSettingsNamesProvider())
+    extend(CompletionType.BASIC, psiElement().withParent(psiElement(JsonStringLiteral::class.java).with(firstChild).withSuperParent(3, PsiFile::class.java)), TemplateNamesProvider())
+    extend(CompletionType.BASIC, psiElement().withParent(psiElement(JsonStringLiteral::class.java).withParent(JsonProperty::class.java).withSuperParent(3, JsonProperty::class.java).with(firstChild)), EnvironmentSettingsNamesProvider())
     extend(CompletionType.BASIC, psiElement().withParent(psiElement(JsonStringLiteral::class.java).withParent(JsonProperty::class.java).with(not(firstChild))), EnvironmentSettingsValuesProvider())
   }
 }
