@@ -20,9 +20,7 @@ import com.jetbrains.php.lang.psi.PhpFile
 import com.jetbrains.php.lang.psi.PhpPsiUtil
 import com.jetbrains.php.lang.psi.elements.Field
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
-import com.jetbrains.php.ssr.dsl.entities.ConstraintName
-import com.jetbrains.php.ssr.dsl.entities.CustomDocTag
-import com.jetbrains.php.ssr.dsl.entities.SearchScope
+import com.jetbrains.php.ssr.dsl.entities.*
 import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex.Companion.not
 import com.jetbrains.php.ssr.dsl.marker.findTagByName
 import com.jetbrains.php.ssr.dsl.marker.getStringValue
@@ -66,7 +64,8 @@ class TemplateIndex : FileBasedIndexExtension<String, TemplateRawData>() {
           val name = docComment.findTagByName(CustomDocTag.SSR_TEMPLATE.displayName)?.getStringValue() ?: continue
           val scopeName = docComment.findTagByName("@scope")?.getStringValue() ?: SearchScope.PROJECT.name
           val scope = if (SearchScope.names().contains(scopeName)) SearchScope.valueOf(scopeName) else SearchScope.PROJECT
-          val templateRawData = TemplateRawData(name, replaceUnderscoresWithDollars(docComment.getPattern()), scope)
+          val severityName = docComment.findTagByName(CustomDocTag.SEVERITY.displayName)?.getStringValue() ?: Severity.DEFAULT.name
+          val templateRawData = TemplateRawData(name, replaceUnderscoresWithDollars(docComment.getPattern()), scope, severityName.toSeverity())
           templateRawData.variables.addAll(docComment.parseVariables())
           map[name] = templateRawData
         }
@@ -153,7 +152,7 @@ private fun replaceUnderscoresWithDollars(searchPattern: String): String {
   return sb.toString()
 }
 
-data class TemplateRawData(val name: String, val pattern: String, val scope: SearchScope, val variables: MutableList<ConstraintRawData> = mutableListOf())
+data class TemplateRawData(val name: String, val pattern: String, val scope: SearchScope, val severity: Severity, val variables: MutableList<ConstraintRawData> = mutableListOf())
 data class ConstraintRawData(val constraints: MutableMap<String, String> = mutableMapOf(),
                              val inverses: MutableMap<String, Boolean> = mutableMapOf())
 
@@ -163,6 +162,7 @@ class TemplateRawDataKeyExternalizer : DataExternalizer<TemplateRawData> {
       out.writeUTF(data.name)
       out.writeUTF(data.pattern)
       out.writeUTF(data.scope.name)
+      out.writeUTF(data.severity.name)
       out.writeInt(data.variables.size)
       for (variable in data.variables) {
         out.writeInt(variable.constraints.size)
@@ -184,7 +184,8 @@ class TemplateRawDataKeyExternalizer : DataExternalizer<TemplateRawData> {
     val name = input.readUTF()
     val pattern = input.readUTF()
     val scope = SearchScope.valueOf(input.readUTF())
-    val result = TemplateRawData(name, pattern, scope)
+    val severity = input.readUTF().toSeverity()
+    val result = TemplateRawData(name, pattern, scope, severity)
     val variablesSize = input.readInt()
     for (i in 0 until variablesSize) {
       val constraintRawData = ConstraintRawData()
