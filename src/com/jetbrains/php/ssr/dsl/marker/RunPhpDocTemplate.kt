@@ -5,10 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
 import com.intellij.structuralsearch.MatchVariableConstraint
-import com.intellij.structuralsearch.plugin.ui.Configuration
-import com.intellij.structuralsearch.plugin.ui.SearchCommand
-import com.intellij.structuralsearch.plugin.ui.SearchConfiguration
-import com.intellij.structuralsearch.plugin.ui.SearchContext
+import com.intellij.structuralsearch.plugin.ui.*
 import com.jetbrains.php.lang.PhpFileType
 import com.jetbrains.php.lang.documentation.phpdoc.parser.PhpDocElementTypes
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment
@@ -40,7 +37,7 @@ fun TemplateRawData.buildConfiguration(project: Project): SearchConfiguration {
   configuration.matchOptions.fileType = PhpFileType.INSTANCE
   configuration.matchOptions.searchPattern = pattern
   for (variable in variables) {
-    val constraint: MatchVariableConstraint = createMatchVariableConstraint(variable.constraints, variable.inverses) ?: continue
+    val constraint: MatchVariableConstraint = createMatchVariableConstraint(project, variable.constraints, variable.inverses) ?: continue
     configuration.matchOptions.addVariableConstraint(constraint)
   }
   return configuration
@@ -57,7 +54,7 @@ fun PhpDocComment.findTagByName(name: String) =
 fun PhpDocTag.getAttributesList() =
   PhpPsiUtil.getChildOfType(this, PhpDocElementTypes.phpDocAttributeList)
 
-private fun createMatchVariableConstraint(constraints: MutableMap<String, String>,
+private fun createMatchVariableConstraint(project: Project, constraints: MutableMap<String, String>,
                                           inverses: MutableMap<String, Boolean>): MatchVariableConstraint? {
   if (!constraints.contains(NAME)) return null
   val res = MatchVariableConstraint()
@@ -73,7 +70,14 @@ private fun createMatchVariableConstraint(constraints: MutableMap<String, String
     res.isInvertExprType = inverses[TYPE]!!
   }
   if (constraints.contains(REFERENCE_CONSTRAINT_NAME)) {
-    res.referenceConstraint = constraints[REFERENCE_CONSTRAINT_NAME]
+    if (constraints[REFERENCE_CONSTRAINT_NAME] in ConfigurationManager.getInstance(project).allConfigurationNames) {
+      res.referenceConstraint = constraints[REFERENCE_CONSTRAINT_NAME]
+    } else {
+      val templateRawData = TemplateIndex.findTemplateRawData(project, constraints[REFERENCE_CONSTRAINT_NAME]!!)
+      if (templateRawData != null) {
+        res.referenceConstraint = '"' + templateRawData.pattern + '"'
+      }
+    }
     res.isInvertReference = inverses[REFERENCE_CONSTRAINT_NAME]!!
   }
   else if (constraints.contains(REFERENCE_CONSTRAINT)) {
