@@ -41,7 +41,7 @@ class VariableNamesInPatternCompletionProvider(val inVariable: Boolean) : Comple
   private fun createLookupString(variable: ConstraintRawData) = if (inVariable) "\$_" + variable.name else "_" + variable.name
 }
 
-private val ConstraintRawData.name: String
+val ConstraintRawData.name: String
   get() = constraints[ConstraintName.NAME]!!
 
 fun PsiElement.isTopStatement(): Boolean = isOfType(this, FUNCTION, NAMESPACE, USE_LIST, CLASS, STATEMENT)

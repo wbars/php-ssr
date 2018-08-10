@@ -17,6 +17,8 @@ import com.jetbrains.php.ssr.dsl.entities.ConstraintName.*
 import com.jetbrains.php.ssr.dsl.entities.CustomDocTag
 import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex
 import com.jetbrains.php.ssr.dsl.indexing.TemplateRawData
+import com.jetbrains.php.ssr.dsl.util.replaceUnderscoresWithDollars
+import com.jetbrains.php.ssr.dsl.util.transformToStringCriteria
 import java.lang.Boolean.parseBoolean
 
 fun PhpDocComment.runSearchTemplate(event: AnActionEvent) {
@@ -35,7 +37,7 @@ fun TemplateRawData.buildConfiguration(project: Project): SearchConfiguration {
   configuration.name = name
   configuration.matchOptions.scope = scope.createScope(project)
   configuration.matchOptions.fileType = PhpFileType.INSTANCE
-  configuration.matchOptions.searchPattern = pattern
+  configuration.matchOptions.searchPattern = replaceUnderscoresWithDollars(pattern)
   for (variable in variables) {
     val constraint: MatchVariableConstraint = createMatchVariableConstraint(project, variable.constraints, variable.inverses) ?: continue
     configuration.matchOptions.addVariableConstraint(constraint)
@@ -70,14 +72,8 @@ private fun createMatchVariableConstraint(project: Project, constraints: Mutable
     res.isInvertExprType = inverses[TYPE]!!
   }
   if (constraints.contains(REFERENCE_CONSTRAINT_NAME)) {
-    if (constraints[REFERENCE_CONSTRAINT_NAME] in ConfigurationManager.getInstance(project).allConfigurationNames) {
-      res.referenceConstraint = constraints[REFERENCE_CONSTRAINT_NAME]
-    } else {
-      val templateRawData = TemplateIndex.findTemplateRawData(project, constraints[REFERENCE_CONSTRAINT_NAME]!!)
-      if (templateRawData != null) {
-        res.referenceConstraint = '"' + templateRawData.pattern + '"'
-      }
-    }
+    val constraintName = constraints[REFERENCE_CONSTRAINT_NAME]
+    res.referenceConstraint = getStringCriteria(project, constraintName)
     res.isInvertReference = inverses[REFERENCE_CONSTRAINT_NAME]!!
   }
   else if (constraints.contains(REFERENCE_CONSTRAINT)) {
@@ -86,6 +82,19 @@ private fun createMatchVariableConstraint(project: Project, constraints: Mutable
   }
   res.isPartOfSearchResults = constraints.getBoolean(TARGET)?:res.isPartOfSearchResults
   return res
+}
+
+fun getStringCriteria(project: Project, constraintName: String?, usedTemplatesNames : MutableSet<String> = mutableSetOf()): String {
+  if (constraintName in ConfigurationManager.getInstance(project).allConfigurationNames) {
+    return constraintName?:""
+  }
+  else {
+    val templateRawData = TemplateIndex.findTemplateRawData(project, constraintName!!)
+    if (templateRawData != null) {
+      return '"' + transformToStringCriteria(project, templateRawData, usedTemplatesNames) + '"'
+    }
+  }
+  return ""
 }
 
 private fun String.roundToInf(): Int = if (this == "inf") Integer.MAX_VALUE else Integer.parseInt(this)
@@ -98,7 +107,7 @@ private fun MutableMap<String, String>.getInt(name: ConstraintName): Int? {
   return if (v != null) Integer.parseInt(v) else null
 }
 
-private fun MutableMap<String, String>.getBoolean(name: ConstraintName): Boolean? {
+fun MutableMap<String, String>.getBoolean(name: ConstraintName): Boolean? {
   val v = this[name.docName]
   return if (v != null) parseBoolean(v) else null
 }

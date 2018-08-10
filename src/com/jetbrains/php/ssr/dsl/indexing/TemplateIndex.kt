@@ -26,8 +26,6 @@ import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex.Companion.not
 import com.jetbrains.php.ssr.dsl.marker.findTagByName
 import com.jetbrains.php.ssr.dsl.marker.getStringValue
 import com.jetbrains.php.ssr.dsl.marker.isSSRTemplateTag
-import com.jetbrains.php.ssr.dsl.util.VariableInfo
-import com.jetbrains.php.ssr.dsl.util.collectVariables
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -67,7 +65,7 @@ class TemplateIndex : FileBasedIndexExtension<String, TemplateRawData>() {
         val scopeName = docComment.findTagByName("@scope")?.getStringValue() ?: SearchScope.PROJECT.name
         val scope = if (SearchScope.names().contains(scopeName)) SearchScope.valueOf(scopeName) else SearchScope.PROJECT
         val severityName = docComment.findTagByName(CustomDocTag.SEVERITY.displayName)?.getStringValue() ?: Severity.DEFAULT.name
-        val templateRawData = TemplateRawData(name, replaceUnderscoresWithDollars(docComment.getPattern()), scope, severityName.toSeverity())
+        val templateRawData = TemplateRawData(name, docComment.getPattern(), scope, severityName.toSeverity())
         templateRawData.variables.addAll(docComment.parseVariables())
         map[name] = templateRawData
       }
@@ -143,23 +141,6 @@ fun PhpDocComment.getPattern(): String {
   val nextDocConfiguration: PsiElement? = PhpPsiUtil.getNextSiblingByCondition(this) { it is PhpDocComment && it.ssrDoc() }
   val endOffset = nextDocConfiguration?.textOffset ?: containingFile.textLength
   return containingFile.text.substring(textRange.endOffset until endOffset).trim()
-}
-
-private fun replaceUnderscoresWithDollars(searchPattern: String): String {
-  val variables: List<VariableInfo> = collectVariables(searchPattern)
-  if (variables.isEmpty()) return searchPattern
-  val sb = StringBuilder()
-  var lastOffset = 0
-  for (variable in variables) {
-    sb.append(searchPattern.substring(lastOffset, variable.range.startOffset))
-    sb.append("$" + variable.name + "$")
-    lastOffset = variable.range.endOffset
-  }
-  val lastEndOffset = variables.last().range.endOffset
-  if (lastEndOffset < searchPattern.length) {
-    sb.append(searchPattern.substring(lastEndOffset))
-  }
-  return sb.toString()
 }
 
 data class TemplateRawData(val name: String, val pattern: String, val scope: SearchScope, val severity: Severity, val variables: MutableList<ConstraintRawData> = mutableListOf())
