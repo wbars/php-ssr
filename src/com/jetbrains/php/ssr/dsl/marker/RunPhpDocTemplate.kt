@@ -103,9 +103,9 @@ private fun String.roundToInf(): Int = toIntOrNull() ?: Int.MAX_VALUE
 private fun <V> MutableMap<String, V>.contains(name: ConstraintName) = this[name.docName] != null
 
 operator fun <V> MutableMap<String, V>.get(name: ConstraintName) = this[name.docName]
+
 private fun MutableMap<String, String>.getInt(name: ConstraintName): Int? {
-  val v = this[name.docName]
-  return if (v != null) Integer.parseInt(v) else null
+  return this[name.docName]?.toIntOrNull()
 }
 
 fun MutableMap<String, String>.getBoolean(name: ConstraintName): Boolean? {
