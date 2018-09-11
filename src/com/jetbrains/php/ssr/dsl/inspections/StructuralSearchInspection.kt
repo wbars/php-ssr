@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.structuralsearch.Matcher
 import com.intellij.structuralsearch.impl.matcher.MatchContext
+import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator
 import com.intellij.structuralsearch.plugin.ui.Configuration
 import com.jetbrains.php.lang.inspections.PhpInspection
@@ -31,7 +32,7 @@ class StructuralSearchInspection : PhpInspection() {
 
       override fun visitElement(element: PsiElement?) {
         synchronized(lock) {
-          if (element == null) return
+          if (element == null || LexicalNodesFilter.getInstance().accepts(element)) return
           val settings = TemplatesEnvironmentIndex.getAllTemplatesSettings(holder.manager.project)
           val excludedTemplatesNames = settings.filter { it.severity == Severity.OFF }.map { it.templateName }.toSet()
           val configurationsRawData = getIncludedTemplateNames(element.project, excludedTemplatesNames).mapNotNull {
