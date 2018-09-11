@@ -47,7 +47,7 @@ class TemplateIndex : FileBasedIndexExtension<String, TemplateRawData>() {
 
   override fun getName(): ID<String, TemplateRawData> = key
 
-  override fun getVersion(): Int = 1
+  override fun getVersion(): Int = 2
 
   override fun dependsOnFileContent(): Boolean = true
 
@@ -65,13 +65,19 @@ class TemplateIndex : FileBasedIndexExtension<String, TemplateRawData>() {
         val scopeName = docComment.findTagByName("@scope")?.getStringValue() ?: SearchScope.PROJECT.name
         val scope = if (SearchScope.names().contains(scopeName)) SearchScope.valueOf(scopeName) else SearchScope.PROJECT
         val severityName = docComment.findTagByName(CustomDocTag.SEVERITY.displayName)?.getStringValue() ?: Severity.DEFAULT.name
-        val templateRawData = TemplateRawData(name, docComment.getPattern(), scope, severityName.toSeverity())
+        val ignoredVariables: Collection<String> = docComment.findTagByName(CustomDocTag.IGNORED_VARIABLES.displayName)?.getIgnoredVariables() ?: emptyList()
+        val templateRawData = TemplateRawData(name, docComment.getPattern(), scope, severityName.toSeverity(), ignoredVariables)
         templateRawData.variables.addAll(docComment.parseVariables())
         map[name] = templateRawData
       }
       map
     }
   }
+}
+
+private fun PhpDocTag.getIgnoredVariables(): Collection<String> {
+  val attributesList = getAttributesList()?:return emptyList()
+  return PhpPsiUtil.getChildren<StringLiteralExpression>(attributesList, StringLiteralExpression.INSTANCEOF).map { it.contents }
 }
 
 fun getTemplateDocs(psiFile: PsiFile?): List<PhpDocComment> {
@@ -143,7 +149,7 @@ fun PhpDocComment.getPattern(): String {
   return containingFile.text.substring(textRange.endOffset until endOffset).trim()
 }
 
-data class TemplateRawData(val name: String, val pattern: String, val scope: SearchScope, val severity: Severity, val variables: MutableList<ConstraintRawData> = mutableListOf())
+data class TemplateRawData(val name: String, val pattern: String, val scope: SearchScope, val severity: Severity, val ignoredVariables: Collection<String> = emptyList(), val variables: MutableList<ConstraintRawData> = mutableListOf())
 data class ConstraintRawData(val constraints: MutableMap<String, String> = mutableMapOf(),
                              val inverses: MutableMap<String, Boolean> = mutableMapOf())
 
@@ -167,6 +173,10 @@ class TemplateRawDataKeyExternalizer : DataExternalizer<TemplateRawData> {
           out.writeBoolean(inverse.value)
         }
       }
+      out.writeInt(data.ignoredVariables.size)
+      for (ignoredVariable in data.ignoredVariables) {
+        out.writeUTF(ignoredVariable)
+      }
 
     }
   }
@@ -176,8 +186,8 @@ class TemplateRawDataKeyExternalizer : DataExternalizer<TemplateRawData> {
     val pattern = input.readUTF()
     val scope = SearchScope.valueOf(input.readUTF())
     val severity = input.readUTF().toSeverity()
-    val result = TemplateRawData(name, pattern, scope, severity)
     val variablesSize = input.readInt()
+    val variables = mutableListOf<ConstraintRawData>()
     for (i in 0 until variablesSize) {
       val constraintRawData = ConstraintRawData()
       val constraintsSize = input.readInt()
@@ -189,9 +199,15 @@ class TemplateRawDataKeyExternalizer : DataExternalizer<TemplateRawData> {
       for (j in 0 until inversesSize) {
         constraintRawData.inverses[input.readUTF()] = input.readBoolean()
       }
-      result.variables.add(constraintRawData)
+      variables += constraintRawData
     }
-    return result
+
+    val ignoredVariables = mutableListOf<String>()
+    val ignoredVariablesSize = input.readInt()
+    for (i in 0 until ignoredVariablesSize) {
+      ignoredVariables += input.readUTF()
+    }
+    return TemplateRawData(name, pattern, scope, severity, ignoredVariables.toList(), variables)
   }
 }
 

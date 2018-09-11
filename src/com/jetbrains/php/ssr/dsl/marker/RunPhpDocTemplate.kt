@@ -17,8 +17,8 @@ import com.jetbrains.php.ssr.dsl.entities.ConstraintName.*
 import com.jetbrains.php.ssr.dsl.entities.CustomDocTag
 import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex
 import com.jetbrains.php.ssr.dsl.indexing.TemplateRawData
-import com.jetbrains.php.ssr.dsl.util.replaceUnderscoresWithDollars
 import com.jetbrains.php.ssr.dsl.util.transformToStringCriteria
+import com.jetbrains.php.ssr.dsl.util.wrapVariablesNames
 import java.lang.Boolean.parseBoolean
 
 fun PhpDocComment.runSearchTemplate(event: AnActionEvent) {
@@ -37,7 +37,8 @@ fun TemplateRawData.buildConfiguration(project: Project): SearchConfiguration {
   configuration.name = name
   configuration.matchOptions.scope = scope.createScope(project)
   configuration.matchOptions.fileType = PhpFileType.INSTANCE
-  configuration.matchOptions.searchPattern = replaceUnderscoresWithDollars(pattern)
+  configuration.matchOptions.searchPattern = wrapVariablesNames(pattern, { if (ignoredVariables.contains(it)) "_" else "$" },
+                                                                { if (ignoredVariables.contains(it)) "" else "$" })
   for (variable in variables) {
     val constraint: MatchVariableConstraint = createMatchVariableConstraint(project, variable.constraints, variable.inverses) ?: continue
     configuration.matchOptions.addVariableConstraint(constraint)

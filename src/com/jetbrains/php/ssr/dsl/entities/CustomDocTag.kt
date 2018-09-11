@@ -5,6 +5,7 @@ enum class CustomDocTag(val displayName: String, val singleArgument: Boolean) {
   SCOPE("@scope", true),
   SEVERITY("@severity", true),
   VARIABLE("@variable", false),
+  IGNORED_VARIABLES("@ignoredVariables", false),
 }
 
 enum class Severity {

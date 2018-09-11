@@ -46,12 +46,10 @@ private fun variableStart(index: Int, searchPattern: String) =
 
 data class VariableInfo(val range: Segment, val name: String)
 
-fun replaceUnderscoresWithDollars(searchPattern: String): String {
-  return wrapVariablesNames(searchPattern, {"$"}, {"$"})
-}
-
 fun transformToStringCriteria(project: Project, template: TemplateRawData, usedTemplatesNames: MutableSet<String>): String {
+  usedTemplatesNames += template.ignoredVariables
   return wrapVariablesNames(template.pattern, {name ->
+    if (template.ignoredVariables.contains(name)) return@wrapVariablesNames "_"
     val variable = template.variables.find { it.name == name }
     if (variable != null && variable.target) {
       return@wrapVariablesNames "'"
