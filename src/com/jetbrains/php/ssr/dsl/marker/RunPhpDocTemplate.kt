@@ -97,7 +97,7 @@ fun getStringCriteria(project: Project, constraintName: String?, usedTemplatesNa
   return ""
 }
 
-private fun String.roundToInf(): Int = if (this == "inf") Integer.MAX_VALUE else Integer.parseInt(this)
+private fun String.roundToInf(): Int = toIntOrNull() ?: Int.MAX_VALUE
 
 private fun <V> MutableMap<String, V>.contains(name: ConstraintName) = this[name.docName] != null
 
