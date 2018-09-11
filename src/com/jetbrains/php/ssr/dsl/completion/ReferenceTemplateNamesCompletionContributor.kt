@@ -10,6 +10,9 @@ import com.jetbrains.php.ssr.dsl.completion.Patterns.insideValueOfAttribute
 import com.jetbrains.php.ssr.dsl.entities.ConstraintName
 import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex
 
+//import com.jetbrains.php.ssr.dsl.entities.ConstraintName
+//import com.jetbrains.php.ssr.dsl.indexing.TemplateIndex
+
 class ReferenceTemplateNamesCompletionContributor: CompletionContributor() {
   init {
     extend(CompletionType.BASIC, psiElement(DOC_STRING).withParent(insideValueOfAttribute(
@@ -18,7 +21,7 @@ class ReferenceTemplateNamesCompletionContributor: CompletionContributor() {
 }
 
 class ReferenceTemplateNamesProvider : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val project = parameters.position.project
     val names: MutableSet<String> = mutableSetOf()
     for (name in ConfigurationManager.getInstance(project).allConfigurationNames + TemplateIndex.getAllTemplateNames(project)) {

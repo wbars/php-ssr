@@ -6,10 +6,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.php.lang.psi.PhpPsiUtil.isOfType
 import com.jetbrains.php.lang.documentation.phpdoc.lexer.PhpDocTokenTypes.DOC_TAG_NAME
 import com.jetbrains.php.lang.documentation.phpdoc.psi.PhpDocComment
 import com.jetbrains.php.lang.psi.PhpPsiUtil
+import com.jetbrains.php.lang.psi.PhpPsiUtil.isOfType
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
 class TemplateRunLineMarkerProvider : RunLineMarkerContributor() {
@@ -18,10 +18,8 @@ class TemplateRunLineMarkerProvider : RunLineMarkerContributor() {
     if (parent != null && leaf.isSSRTemplateTag()) {
       val templateName = "Run " + (PsiTreeUtil.findChildOfType(parent, StringLiteralExpression::class.java)?.contents ?: "template")
       return Info(AllIcons.Actions.Rerun, arrayOf<AnAction>(object : AnAction(templateName) {
-        override fun actionPerformed(event: AnActionEvent?) {
-          if (event != null) {
-            parent.runSearchTemplate(event)
-          }
+        override fun actionPerformed(event: AnActionEvent) {
+          parent.runSearchTemplate(event)
         }
       })) { templateName }
     }

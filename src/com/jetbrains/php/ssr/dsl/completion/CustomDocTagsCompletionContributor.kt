@@ -18,7 +18,7 @@ class CustomDocTagsCompletionContributor: CompletionContributor() {
 }
 
 class CustomDocTagsCompletionProvider : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(parameters: CompletionParameters, ctx: ProcessingContext?, result: CompletionResultSet) {
+  override fun addCompletions(parameters: CompletionParameters, ctx: ProcessingContext, result: CompletionResultSet) {
     val at = parameters.position.parent is PhpDocTag
     for (value in CustomDocTag.values()) {
       val lookupString = if (at) value.displayName.substring(1) else value.displayName

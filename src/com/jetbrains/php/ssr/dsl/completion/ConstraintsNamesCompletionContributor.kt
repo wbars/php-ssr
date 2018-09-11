@@ -28,7 +28,7 @@ class ConstraintsNamesCompletionContributor : CompletionContributor() {
 }
 
 class ConstraintsNamesCompletionProvider : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val project = parameters.position.project
     for (constraint in getSearchConstraints(project) ?: return) {
       val value = constraint.getValueContents() ?: return

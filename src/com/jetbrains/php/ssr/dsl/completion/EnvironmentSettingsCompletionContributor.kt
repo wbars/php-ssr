@@ -27,7 +27,7 @@ class EnvironmentSettingsCompletionContributor: CompletionContributor() {
 }
 
 class EnvironmentSettingsValuesProvider : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(parameters: CompletionParameters, p1: ProcessingContext?, result: CompletionResultSet) {
+  override fun addCompletions(parameters: CompletionParameters, p1: ProcessingContext, result: CompletionResultSet) {
     val settingName = PhpPsiUtil.getPrevSiblingByCondition<JsonStringLiteral>(parameters.position.parent) { it is JsonStringLiteral } ?: return
     when (settingName.value.toUpperCase()) {
       CustomDocTag.SCOPE.name -> addStrings(SearchScope.names().map { it.toLowerCase() }, result)
@@ -37,13 +37,13 @@ class EnvironmentSettingsValuesProvider : CompletionProvider<CompletionParameter
 }
 
 class EnvironmentSettingsNamesProvider : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(p0: CompletionParameters, p1: ProcessingContext?, result: CompletionResultSet) {
+  override fun addCompletions(p0: CompletionParameters, p1: ProcessingContext, result: CompletionResultSet) {
     addStrings(listOf(CustomDocTag.SCOPE.name.toLowerCase(), CustomDocTag.SEVERITY.name.toLowerCase()), result)
   }
 }
 
 class TemplateNamesProvider : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val templateNames = parameters.originalFile.getTemplateNames()
     addStrings(TemplateIndex.getAllTemplateNames(parameters.position.project).filterNot { it in templateNames }, result)
   }

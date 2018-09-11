@@ -23,7 +23,7 @@ import java.lang.Boolean.parseBoolean
 
 fun PhpDocComment.runSearchTemplate(event: AnActionEvent) {
   val configuration = this.buildConfiguration()?:return
-  SearchCommand(configuration, SearchContext.buildFromDataContext(event.dataContext)).startSearching()
+  SearchCommand(configuration, SearchContext(event.dataContext)).startSearching()
 }
 
 private fun PhpDocComment.buildConfiguration(): Configuration? {

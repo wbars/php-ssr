@@ -42,11 +42,11 @@ object Patterns {
   }
 
   val firstChild = object : PatternCondition<JsonStringLiteral>("firstChild") {
-    override fun accepts(literal: JsonStringLiteral, p1: ProcessingContext?) = literal.parent.firstChild == literal
+    override fun accepts(literal: JsonStringLiteral, p1: ProcessingContext) = literal.parent.firstChild == literal
   }
 
   fun<T : PsiElement> not(patternCondition: PatternCondition<T>) = object : PatternCondition<T>("not_"+patternCondition.debugMethodName) {
-    override fun accepts(p0: T, p1: ProcessingContext?): Boolean = !patternCondition.accepts(p0, p1)
+    override fun accepts(p0: T, p1: ProcessingContext): Boolean = !patternCondition.accepts(p0, p1)
   }
 
   fun docTagValue(docTag: CustomDocTag): PsiElementPattern.Capture<PsiElement> = psiElement(PhpDocTokenTypes.DOC_STRING).withSuperParent(

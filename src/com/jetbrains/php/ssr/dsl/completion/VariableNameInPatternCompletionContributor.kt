@@ -30,7 +30,7 @@ class VariableNameInPatternCompletionContributor: CompletionContributor() {
 }
 
 class VariableNamesInPatternCompletionProvider(val inVariable: Boolean) : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val topStatement = PhpPsiUtil.getParentByCondition<PsiElement>(parameters.position) { it.isTopStatement() } ?: return
     val ssrDocComment = PhpPsiUtil.getPrevSiblingByCondition<PhpDocComment>(topStatement) { it is PhpDocComment && it.ssrDoc() } ?: return
     for (variable in ssrDocComment.parseVariables()) {

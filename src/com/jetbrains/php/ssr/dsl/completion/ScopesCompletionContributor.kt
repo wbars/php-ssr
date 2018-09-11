@@ -14,7 +14,7 @@ class ScopesCompletionContributor : CompletionContributor() {
 }
 
 class ScopesCompletionProvider : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(parameters: CompletionParameters, ctx: ProcessingContext?, result: CompletionResultSet) {
+  override fun addCompletions(parameters: CompletionParameters, ctx: ProcessingContext, result: CompletionResultSet) {
     for (value in SearchScope.values()) {
       result.addElement(LookupElementBuilder.create(value.name.toLowerCase()))
     }

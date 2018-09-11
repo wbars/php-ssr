@@ -20,7 +20,7 @@ class VariableNamesInAttributeCompletionContributor : CompletionContributor() {
 }
 
 class VariableNamesInAttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
-  override fun addCompletions(parameters: CompletionParameters, processingContext: ProcessingContext?, result: CompletionResultSet) {
+  override fun addCompletions(parameters: CompletionParameters, processingContext: ProcessingContext, result: CompletionResultSet) {
     val docComment: PhpDocComment = PhpPsiUtil.getParentByCondition(parameters.position, PhpDocComment.INSTANCEOF) ?: return
     for (variable in collectVariables(docComment.getPattern())) {
       result.addElement(LookupElementBuilder.create(variable.name).withIcon(AllIcons.Nodes.Variable))
